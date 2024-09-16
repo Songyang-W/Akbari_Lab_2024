@@ -1,5 +1,5 @@
 % Script to calculate average from WeissOpticalDataTransfer dataset
-
+addpath("permutation_Matlab/")
 load_updated_weiss
 %% plot the overall 
 
@@ -26,6 +26,14 @@ Weiss_Optical_Stats_V1(time_norm,rRatio_treatment,rRatio_placebo,'rRatio')
 Weiss_Optical_Stats_V1(time_norm,renee_rCBF_treatment,renee_rCBF_placebo,'relative CBF')
 %rCMRO2
 Weiss_Optical_Stats_V1(time_norm,renee_rCMRO2_treatment,renee_rCMRO2_placebo,'relative CMRO2')
+
+%% calculate slope
+% using model to denoise
+aCBF_t_sgolay = sgolayfilt(aCBF_treatment, 10, 101);
+aCBF_p_sgolay = sgolayfilt(aCBF_placebo, 10, 101);
+
+
+%% TODO permutation test
 
 %% Friedman’s test
 

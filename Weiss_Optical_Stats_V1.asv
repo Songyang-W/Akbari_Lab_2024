@@ -4,11 +4,7 @@ function Weiss_Optical_Stats_V1(time_norm,treatment,placebo,group_name)
 % values of Mann-Whitney U test for both AUC and all time points
 
 % Sep 15 add permutation test same way as Mann-Whitney U test
-
-timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-folder_name = ['Results_' timestamp];
-mkdir(folder_name);
-%% plot the raw
+%% plot the raw 
 %{
 figure;
 hold on
@@ -30,7 +26,7 @@ p_vector_MW = M_W_U_test_loop(treatment,placebo);
 p_vector_permuation = Permutation_test_loop(treatment,placebo,100);
 %% Mann-Whitney U Test for AUC
 p_auc_MW = ranksum(sum(treatment),sum(placebo));
-p_auc_permutation = permutationTest(sum(treatment),sum(placebo),100);
+p_auc_permutation = permutationTest(sum(treatment),sum(placebo),1000);
 %% merge plot
 figure;
 ax(1) = subplot(311)
@@ -42,7 +38,7 @@ Plot_range_mean(time_norm(1:data_length),placebo,'b', ...
 legend
 hold off
 title(group_name)
-%xlabel('time(min)')
+xlabel('time(min)')
 ylabel(group_name)
 set(gca,'fontsize',15)
 set(gcf,'color','white')
@@ -54,7 +50,7 @@ hold off
 text(1, 0.05, 'p = 0.05', 'VerticalAlignment', 'bottom',...
     'HorizontalAlignment', 'right', 'FontSize', 10, 'Color', 'red');
 ylabel('p value')
-%xlabel('time (min)')
+xlabel('time (min)')
 title('Mann-Whitney U Test for Each Time Point')
 legend(['p value for AUC =',num2str(p_auc_MW)])
 set(gca,'fontsize',14)
@@ -68,17 +64,11 @@ text(1, 0.05, 'p = 0.05', 'VerticalAlignment', 'bottom',...
     'HorizontalAlignment', 'right', 'FontSize', 10, 'Color', 'red');
 ylabel('p value')
 xlabel('time (min)')
-title('Permutation Test for Each Time Point')
+title('Mann-Whitney U Test for Each Time Point')
 legend(['p value for AUC =',num2str(p_auc_permutation)])
-set(gca,'fontsize',20)
+set(gca,'fontsize',14)
 set(gcf,'color','white')
 linkaxes(ax,'x')
 xlim([time_norm(1),time_norm(end)])
-
-set(gcf, 'Position', get(0, 'Screensize'));
-% Save the figure with the group name in the created folder
-saveas(gcf, fullfile(folder_name, [group_name '_plot.png']));
-% Save data
-%save(fullfile(folder_name, [group_name '_data.mat']), 'time_norm', 'treatment', 'placebo', 'p_vector_MW', 'p_vector_permuation', 'p_auc_MW', 'p_auc_permutation');
 
 end

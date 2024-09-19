@@ -1,13 +1,10 @@
-function Weiss_Optical_Stats_V1(time_norm,treatment,placebo,group_name)
+function Weiss_Optical_Stats_V1(time_norm,treatment,placebo,group_name,folder_name)
 % this function is just a copy of the previous code, plot the normal
 % comparasion between treatment group and placebo group, and calculate p
 % values of Mann-Whitney U test for both AUC and all time points
 
 % Sep 15 add permutation test same way as Mann-Whitney U test
 
-timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-folder_name = ['Results_' timestamp];
-mkdir(folder_name);
 %% plot the raw
 %{
 figure;
@@ -70,15 +67,15 @@ ylabel('p value')
 xlabel('time (min)')
 title('Permutation Test for Each Time Point')
 legend(['p value for AUC =',num2str(p_auc_permutation)])
-set(gca,'fontsize',20)
+set(gca,'fontsize',14)
 set(gcf,'color','white')
 linkaxes(ax,'x')
 xlim([time_norm(1),time_norm(end)])
 
-set(gcf, 'Position', get(0, 'Screensize'));
+%set(gcf, 'Position', get(0, 'Screensize'));
 % Save the figure with the group name in the created folder
-saveas(gcf, fullfile(folder_name, [group_name '_plot.png']));
+savefig(gcf, fullfile(folder_name, [group_name '_plot.fig']));
 % Save data
 %save(fullfile(folder_name, [group_name '_data.mat']), 'time_norm', 'treatment', 'placebo', 'p_vector_MW', 'p_vector_permuation', 'p_auc_MW', 'p_auc_permutation');
-
+close
 end

@@ -1,5 +1,6 @@
 % Script to calculate average from WeissOpticalDataTransfer dataset
 addpath("permutation_Matlab/")
+addpath("functions/")
 load_updated_weiss
 timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
 folder_name = ['Results_' timestamp];

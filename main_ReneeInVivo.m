@@ -6,7 +6,7 @@ timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
 folder_name = ['Results_' timestamp];
 mkdir(folder_name);
 %% plot the overall 
-
+% Weiss Optical Stats V1 is the basic code only run MW test and 
 % aCBF
 Weiss_Optical_Stats_V1(time_norm,aCBF_treatment,aCBF_placebo,'aCBF',folder_name)
 %aCMRO2
@@ -35,6 +35,7 @@ Weiss_Optical_Stats_V1(time_norm,renee_rCMRO2_treatment,renee_rCMRO2_placebo,'re
 % using model to denoise
 aCBF_t_sgolay = sgolayfilt(aCBF_treatment, 1, 101);
 aCBF_p_sgolay = sgolayfilt(aCBF_placebo, 1, 101);
+%plot the result out
 figure;
 ax(1) = subplot(211);
 plot(time_norm(1:length(aCBF_t_sgolay)),mean(aCBF_treatment'))
@@ -51,7 +52,19 @@ xlim([0 30])
 xlabel('time(min)')
 set(gca,'fontsize',14)
 set(gcf,'color','white')
-%% TODO permutation test
+
+%% Study the change of the slope
+
+
+Weiss_Optical_Stats_V2(time_norm,aCBF_treatment,aCBF_placebo,'aCBF')
+Weiss_Optical_Stats_V2(time_norm,CtHbTot_treatment,CtHbTot_placebo,'CtHbTot')
+
+Weiss_Optical_Stats_V2(time_norm,rRatio_treatment,rRatio_placebo,'rRatio')
+Weiss_Optical_Stats_V2(time_norm,CtHbO2_treatment,CtHbO2_placebo,'CtHbO2')
+Weiss_Optical_Stats_V2(time_norm,rCtHbO2_treatment,rCtHbO2_placebo,'relative CtHbO2')
+
+
+figure;plot(new_time,mean(aCBF_p_slope'),'r',new_time,mean(aCBF_t_slope'),'b')
 
 %% Friedman’s test
 

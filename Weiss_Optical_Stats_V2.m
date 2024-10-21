@@ -1,9 +1,11 @@
 function Weiss_Optical_Stats_V2(time,treatment,placebo,group_name)
-%% variable settings
+% This code will 1.smooth the raw data by using sgolayfilt; 2.
+%% variable settings TODO
 window_size = 2;%min
 overlap = 1;%min
 
 %% calculate the slope change
+%TODO, sgolayfilt(treatment, 1, 101) can change 1 and 101
 treatment_sgolay = sgolayfilt(treatment, 1, 101);
 placebo_sgolay = sgolayfilt(placebo, 1, 101);
 [placebo_slope,placebo_intersect,new_time]=Slope_trend(time,placebo_sgolay,window_size,overlap);

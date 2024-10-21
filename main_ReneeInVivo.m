@@ -1,12 +1,17 @@
-% Script to calculate average from WeissOpticalDataTransfer dataset
+% Script to calculate average,range,slope from WeissOpticalDataTransfer dataset
+% this step is adding data and function, maybe has several bugs, with
+% loading, be careful for the path
+
 addpath("permutation_Matlab/")
 addpath("functions/")
-load_updated_weiss
+load_updated_weiss %run a separate code, hard coded the loading process
 timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-folder_name = ['Results_' timestamp];
+folder_name = ['Results_' timestamp]; % save data to the folder that contains
 mkdir(folder_name);
 %% plot the overall 
-% Weiss Optical Stats V1 is the basic code only run MW test and 
+% Weiss Optical Stats V1 is the basic code only run MW test and Permutation
+% Test
+
 % aCBF
 Weiss_Optical_Stats_V1(time_norm,aCBF_treatment,aCBF_placebo,'aCBF',folder_name)
 %aCMRO2
@@ -32,6 +37,7 @@ Weiss_Optical_Stats_V1(time_norm,renee_rCBF_treatment,renee_rCBF_placebo,'relati
 Weiss_Optical_Stats_V1(time_norm,renee_rCMRO2_treatment,renee_rCMRO2_placebo,'relative CMRO2',folder_name)
 
 %% calculate slope
+% testing the method, Weiss_Optical_Stats_V2 included everything
 % using model to denoise
 aCBF_t_sgolay = sgolayfilt(aCBF_treatment, 1, 101);
 aCBF_p_sgolay = sgolayfilt(aCBF_placebo, 1, 101);
@@ -64,9 +70,7 @@ Weiss_Optical_Stats_V2(time_norm,CtHbO2_treatment,CtHbO2_placebo,'CtHbO2')
 Weiss_Optical_Stats_V2(time_norm,rCtHbO2_treatment,rCtHbO2_placebo,'relative CtHbO2')
 
 
-figure;plot(new_time,mean(aCBF_p_slope'),'r',new_time,mean(aCBF_t_slope'),'b')
-
 %% Friedman’s test
-
+% I tried this, but doesn't feel very helpful, can be deleted
 p_friedman = friedman(treatment_group(1:3143,:),3)
 

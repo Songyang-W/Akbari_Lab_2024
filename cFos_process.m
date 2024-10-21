@@ -1,9 +1,10 @@
 
 load("cFos_data.mat")
 addpath("DrosteEffect-BrewerMap-3.2.5.0/")
+cFos_data_mat_knn_imputed = knnimpute([cFos_data_mat';ones(1,46)],2)';
+
 %% Fig 3A
 % assume rats performed same
-cFos_data_mat_knn_imputed = knnimpute([cFos_data_mat';ones(1,46)],2)';
 %cFos_data_mat_knn_imputed = knnimpute(cFos_data_mat,3);
 
 mean_matrix = [mean(cFos_data_mat_knn_imputed(control_ind,:));...
@@ -62,3 +63,33 @@ xticks(1:12);  % Assuming 10 labels on the x-axis, adjust accordingly
 xticklabels({'VMH', 'SC', 'PAG', 'PBN', 'mRt', 'IC', 'LC', 'DG', 'CPu', 'CA1', 'CA3', 'CeA'});
 yticks(1:2);  % Assuming 5 time points, adjust accordingly
 yticklabels({'1','2'}); % Time points in hours
+
+%% Fig 4 
+
+% chatgpt version:
+
+% Define parameters
+alpha = 1.0;
+sigma = 0.1;
+tspan = [0, 1];
+dt = 0.01;
+n = round((tspan(2) - tspan(1)) / dt);
+W = cumsum(sqrt(dt) * randn(1, n)); % Wiener process
+
+% Initial condition
+w0 = 0;
+w = zeros(1, n);
+w(1) = w0;
+
+% Euler-Maruyama method
+for i = 2:n
+    drift = -alpha * w(i-1);
+    diffusion = sigma;
+    w(i) = w(i-1) + drift * dt + diffusion * (W(i) - W(i-1));
+end
+
+% Plot the solution
+plot(linspace(tspan(1), tspan(2), n), w);
+title('Solution to the SDE in MATLAB');
+xlabel('Time');
+ylabel('w(t)');

@@ -1,4 +1,4 @@
-function Weiss_Optical_Stats_V1(time_norm,treatment,placebo,group_name,folder_name)
+function Weiss_Optical_Stats_V1(time_norm,treatment,placebo,group_name,folder_name,save_fig)
 % this function is just a copy of the previous code, plot the normal
 % comparasion between treatment group and placebo group, and calculate p
 % values of Mann-Whitney U test for both AUC and all time points
@@ -74,7 +74,9 @@ xlim([time_norm(1),time_norm(end)])
 
 %set(gcf, 'Position', get(0, 'Screensize'));
 % Save the figure with the group name in the created folder
-savefig(gcf, fullfile(folder_name, [group_name '_plot.fig']));
+if save_fig ~= 1
+    savefig(gcf, fullfile(folder_name, [group_name '_plot.fig']));
+end
 % Save data
 %save(fullfile(folder_name, [group_name '_data.mat']), 'time_norm', 'treatment', 'placebo', 'p_vector_MW', 'p_vector_permuation', 'p_auc_MW', 'p_auc_permutation');
 close

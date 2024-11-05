@@ -1,5 +1,5 @@
 
-load cFos_data_summary.mat
+load vaf_data_summary.mat
 %%
 scatter3(repelem([0.5,0.8,1,2,3],9),cmro2mat(:),repmat(ca1,5,1),'filled')
 
@@ -84,12 +84,31 @@ xlabel('time post ROSC(min)')
 ylabel('Damaged Cells 2-hr postROSC(%)')
 set(gcf,'color','w')
 
-%% 3D raw overlay
+%% Model set up
+
 % Assuming you have X, Y, and Z data points for your scatter plot
 T = repelem([0.5,0.8,1,2,3],9)';
 Y = cmro2mat(:);
 Z1 = repmat(ca1,5,1);
 Z2 = repmat(ca3,5,1);
+SFICMRO2_array = sficmro2mat(:);
+% Construct the design matrix for GLM (same as original)
+%X_matrix = [ones(size(T)) T Y SFICMRO2_array];
+X_matrix = [ones(size(T)) T Y T.*Y SFICMRO2_array ];
+
+%% dAIC score
+distribution = 'normal'; % Options: 'normal', 'binomial', 'poisson', etc.
+linkFunction = 'log'; % Options depend on the distribution
+variableNames = {'intersections','Time','CMRO2','Time*CMRO2','CBF/CMRO2'};
+Delta_AIC(X_matrix(:,2:end),Z1, distribution, linkFunction,variableNames(2:end))
+Delta_AIC(X_matrix(:,2:end),Z2, distribution, linkFunction,variableNames(2:end))
+
+%% 3D raw overlay
+
+SFICMRO2_mat = vaf_summary_table{:,["SFICMRO205MinPostROSC",...
+    "SFICMRO208MinPostROSC","SFICMRO21MinPostROSC","SFICMRO22MinPostROSC",...
+    "SFICMRO23MinPostROSC"]};%adding CBF/CMRO2 in model
+SFICMRO2_array = SFICMRO2_mat(:);
 
 figure(104)
 hold on
@@ -104,10 +123,9 @@ zlabel('Damaged Cells 2-hr postROSC (%)');
 title('Raw 3D Plot');
 set(gca,'fontsize',14)
 set(gcf,'color','w')
-%% 3D linear regression fit
-% Construct the design matrix for GLM (same as original)
-X_matrix = [ones(size(T)) T Y T.*Y];
 
+
+%% single model fit
 % Perform GLM regression with log link function
 % We use 'glmfit' function with 'link', 'log' for the log link function
 [b1,dev1,stats1] = glmfit(X_matrix(:, 2:end), Z1, 'normal', 'link', 'log');
@@ -135,7 +153,7 @@ zFitted_ca3 = exp(fitted_surface_ca3(xGrid, yGrid));
 % Create a 2D contour plot
 figure(105);
 % Filled contour plot for the fitted surface
-contourf(xGrid, yGrid, zFitted_ca1*100, 50,'LineColor', 'k'); % Black contour lines
+contourf(xGrid, zFitted_ca1*100, yGrid,50,'LineColor', 'k'); % Black contour lines
 
 % Add colorbar to represent the Z-values
 cb = colorbar;
@@ -143,7 +161,7 @@ ylabel(cb, 'Damaged Cells 2-hr postROSC(%)', 'FontSize', 14); % Label for the co
 
 % Plot the original data points in 2D (scatter plot without z-axis)
 hold on;
-scatter(T, Y, 50, 'b', 'filled'); % 2D scatter plot for original data
+%scatter(T, Y, 50, 'b', 'filled'); % 2D scatter plot for original data
 
 % Modify the legend to include new formula
 legend('Data', formula_str1, 'Interpreter', 'latex', ...
@@ -164,15 +182,15 @@ colormap(flipud(hot)); % You can adjust the colormap if needed
 % Create a 2D contour plot
 figure(106);
 % Filled contour plot for the fitted surface
-contourf(xGrid, yGrid, zFitted_ca3*100, 50,'LineColor', 'k'); % Black contour lines
+contourf(xGrid, zFitted_ca3*100,yGrid, 50,'LineColor', 'k'); % Black contour lines
 
 % Add colorbar to represent the Z-values
 cb = colorbar;
-ylabel(cb, 'Damaged Cells 2-hr postROSC(%)', 'FontSize', 14); % Label for the colorbar
+ylabel(cb, 'CMRO2 value', 'FontSize', 14); % Label for the colorbar
 
 % Plot the original data points in 2D (scatter plot without z-axis)
 hold on;
-scatter(T, Y, 50, 'b', 'filled'); % 2D scatter plot for original data
+%scatter(T, Y, 50, 'b', 'filled'); % 2D scatter plot for original data
 
 % Modify the legend to include new formula
 legend('Data', formula_str2, 'Interpreter', 'latex', ...
@@ -180,7 +198,7 @@ legend('Data', formula_str2, 'Interpreter', 'latex', ...
 
 % Update the labels with better descriptions
 xlabel('Time for CMRO2 Measurement (Post-ROSC minutes)');
-ylabel('CMRO2 (μmol O2/100g/min)');
+ylabel('DAMAGED CELL COUNT (%)');
 title('Fitted Polynomial Surface on CA3 (2D Contour Plot)');
 set(gca, 'fontsize', 14);
 set(gcf, 'color', 'w');
@@ -257,3 +275,5 @@ figure(109);
 scatter3(T, Y, Z1*100, 'b','filled'); % Original scatter plot
 hold on
 scatter3(T, Y, Z1_pred*100, 'r','filled'); % Original scatter plot
+
+

@@ -1,54 +1,67 @@
 
 load vaf_data_summary.mat
+
+
 %%
 scatter3(repelem([0.5,0.8,1,2,3],9),cmro2mat(:),repmat(ca1,5,1),'filled')
 
 %% improve plot 1
 figure(101);
+% C = rand(9, 3);
+C=[0,0,0];
+color1 = [242, 75, 89] / 255; % #f24b59
+color2 = [155, 177, 242] / 255; % #9bb1f2
+data_input = output_vector;
 for time_points = 1:5
-    [R,p] = corr(cmro2mat(:,time_points),ca1);
+    [R,p] = corr(data_input(:,time_points),ca1);
     ca1_r(time_points) = R;
-    x_line = min(cmro2mat(:,time_points)):0.01:max(cmro2mat(:,time_points));
-    mdl_temp = fitlm(cmro2mat(:,time_points),ca1);
+    x_line = min(data_input(:,time_points)):0.01:max(data_input(:,time_points));
+    mdl_temp = fitlm(data_input(:,time_points),ca1);
     intersection = mdl_temp.Coefficients{1,1};
     slope = mdl_temp.Coefficients{2,1};
     y_pred = x_line*slope+intersection;
 
     ax(time_points) = subplot(5,1,time_points);
-    scatter(cmro2mat(:,time_points),ca1,'r','filled')
+    scatter(data_input(:,time_points),ca1,36, color1, 'filled')
     hold on
     plot(x_line,y_pred,'r')
     hold off
     legend(['R=',num2str(R), (p<0.05)*'*'])
     set(gca,'fontsize',14)
+    if time_points ==3
+        ylabel('Damaged Cells 2-hr postROSC(%)')
+    end
 end
 linkaxes(ax,'x')
+xlim([min(data_input(:))-0.1 max(data_input(:))])
 xlabel('time post ROSC(min)')
-ylabel('Damaged Cells 2-hr postROSC(%)')
 sgtitle('CA1')
 set(gcf,'color','w')
 
 figure(102);
 for time_points = 1:5
-    [R,p] = corr(cmro2mat(:,time_points),ca3);
+    [R,p] = corr(data_input(:,time_points),ca3);
     ca3_r(time_points) = R;
-    x_line = min(cmro2mat(:,time_points)):0.01:max(cmro2mat(:,time_points));
-    mdl_temp = fitlm(cmro2mat(:,time_points),ca3);
+    x_line = min(data_input(:,time_points)):0.01:max(data_input(:,time_points));
+    mdl_temp = fitlm(data_input(:,time_points),ca3);
     intersection = mdl_temp.Coefficients{1,1};
     slope = mdl_temp.Coefficients{2,1};
     y_pred = x_line*slope+intersection;
 
     ax(time_points) = subplot(5,1,time_points);
-    scatter(cmro2mat(:,time_points),ca3,'b','filled')
+    scatter(data_input(:,time_points),ca3,36, color2, 'filled')
     hold on
     plot(x_line,y_pred,'b')
     hold off
     legend(['R=',num2str(R), (p<0.05)*'*'])
     set(gca,'fontsize',14)
+    if time_points ==3
+        ylabel('Damaged Cells 2-hr postROSC(%)')
+    end
 end
 linkaxes(ax,'x')
+xlim([min(data_input(:))-0.1 max(data_input(:))])
 xlabel('time post ROSC(min)')
-ylabel('Damaged Cells 2-hr postROSC(%)')
 sgtitle('CA3')
 set(gcf,'color','w')
 %% improve plot 2
@@ -92,14 +105,15 @@ Y = cmro2mat(:);
 Z1 = repmat(ca1,5,1);
 Z2 = repmat(ca3,5,1);
 SFICMRO2_array = sficmro2mat(:);
+CBFmat = sficmro2mat.*cmro2mat;
 % Construct the design matrix for GLM (same as original)
 %X_matrix = [ones(size(T)) T Y SFICMRO2_array];
-X_matrix = [ones(size(T)) T Y T.*Y SFICMRO2_array ];
+X_matrix = [ones(size(T)) T Y T.*Y CBFmat(:) ];
 
 %% dAIC score
 distribution = 'normal'; % Options: 'normal', 'binomial', 'poisson', etc.
 linkFunction = 'log'; % Options depend on the distribution
-variableNames = {'intersections','Time','CMRO2','Time*CMRO2','CBF/CMRO2'};
+variableNames = {'intersections','Time','CMRO2','Time*CMRO2','CBF'};
 Delta_AIC(X_matrix(:,2:end),Z1, distribution, linkFunction,variableNames(2:end))
 Delta_AIC(X_matrix(:,2:end),Z2, distribution, linkFunction,variableNames(2:end))
 
@@ -128,8 +142,8 @@ set(gcf,'color','w')
 %% single model fit
 % Perform GLM regression with log link function
 % We use 'glmfit' function with 'link', 'log' for the log link function
-[b1,dev1,stats1] = glmfit(X_matrix(:, 2:end), Z1, 'normal', 'link', 'log');
-[b2,dev2,stats2] = glmfit(X_matrix(:, 2:end), Z2, 'normal', 'link', 'log');
+[b1,dev1,stats1] = glmfit(X_matrix(:, 2:end), Z1, 'poisson', 'link', 'log');
+[b2,dev2,stats2] = glmfit(X_matrix(:, 2:end), Z2, 'poisson', 'link', 'log');
 
 % Define the fitted surface using the GLM coefficients
 fitted_surface_ca1 = @(X, Y) b1(1) + b1(2)*X + b1(3)*Y + b1(4)*X.*Y;
@@ -144,32 +158,77 @@ formula_str2 = sprintf('$$z = %.3f + %.3f x + %.3f y + %.3f x*y$$', ...
 % Generate meshgrid for plotting the fitted surface
 [xGrid, yGrid] = meshgrid(linspace(min(T)-0.1, max(T)+0.1,1000),...
     linspace(min(Y)-0.1, max(Y)+0.1),1000);
-
+%%
 % Compute the fitted Z values on the grid (using exp because of log link)
 zFitted_ca1 = exp(fitted_surface_ca1(xGrid, yGrid));
 zFitted_ca3 = exp(fitted_surface_ca3(xGrid, yGrid));
-%%
+% Compute the scaled Z-values for both datasets
+z1 = zFitted_ca1 * 100;
+z2 = zFitted_ca3 * 100;
 
-% Create a 2D contour plot
+% Determine the global minimum and maximum across both datasets
+global_min = min([z1(:); z2(:)]);
+%global_max = max([z1(:); z2(:)]);
+global_max = max(z1(:));
+
+% Define a function to create contour plots with consistent color scaling
+function create_contour_plot(figure_number, xGrid, yGrid, zData, T, Y, ...
+                             ylabel_text, plot_title, global_min, global_max)
+    figure(figure_number);
+    % Filled contour plot for the fitted surface
+    contourf(xGrid, yGrid, zData, 50, 'LineColor', 'k'); % Black contour lines
+    
+    % Add colorbar to represent the Z-values
+    cb = colorbar;
+    ylabel(cb, ylabel_text, 'FontSize', 14); % Label for the colorbar
+    
+    % Set the color axis limits to the global min and max
+    caxis([global_min global_max]);
+    
+    % Plot the original data points in 2D (scatter plot without z-axis)
+    hold on;
+    scatter(T, Y, 50, 'b', 'filled'); % 2D scatter plot for original data
+    
+    % Update the labels with better descriptions
+    xlabel('Time for CMRO2 Measurement (Post-ROSC minutes)', 'FontSize', 14);
+    ylabel('CMRO2 (μmol O\textsubscript{2}/100 g/min)', 'Interpreter', 'tex', 'FontSize', 14);
+    title(plot_title, 'FontSize', 16);
+    set(gca, 'FontSize', 14);
+    set(gcf, 'Color', 'w');
+    
+    hold off;
+    colormap(flipud(hot)); % You can adjust the colormap if needed
+end
+
+% Create the first contour plot for CA1
+create_contour_plot(105, xGrid, yGrid, z1, T, Y, ...
+                   'Damaged Cells 2-hr postROSC (%)', ...
+                   'Fitted Polynomial Surface on CA1 (2D Contour Plot)', ...
+                   global_min, global_max);
+
+% Create the second contour plot for CA3
+create_contour_plot(106, xGrid, yGrid, z2, T, Y, ...
+                   'Damaged Cells 2-hr postROSC (%)', ...
+                   'Fitted Polynomial Surface on CA3 (2D Contour Plot)', ...
+                   global_min, global_max);
+%%
+% Create a 2D contour plot for CMRO2
 figure(105);
 % Filled contour plot for the fitted surface
-contourf(xGrid, zFitted_ca1*100, yGrid,50,'LineColor', 'k'); % Black contour lines
+contourf(xGrid, zFitted_ca1*100,yGrid,50,'LineColor', 'k'); % Black contour lines
 
 % Add colorbar to represent the Z-values
 cb = colorbar;
-ylabel(cb, 'Damaged Cells 2-hr postROSC(%)', 'FontSize', 14); % Label for the colorbar
+ylabel(cb, 'CMRO2 (μmol O2/100 g/min)', 'FontSize', 14); % Label for the colorbar
 
-% Plot the original data points in 2D (scatter plot without z-axis)
-hold on;
-%scatter(T, Y, 50, 'b', 'filled'); % 2D scatter plot for original data
 
 % Modify the legend to include new formula
-legend('Data', formula_str1, 'Interpreter', 'latex', ...
-    'Location', 'northoutside', 'Orientation', 'horizontal');
+% legend('Data', formula_str1, 'Interpreter', 'latex', ...
+%     'Location', 'northoutside', 'Orientation', 'horizontal');
 
 % Update the labels with better descriptions
 xlabel('Time for CMRO2 Measurement (Post-ROSC minutes)');
-ylabel('CMRO2 (μmol O2/100 g/min)');
+ylabel('Damaged Cells 2-hr postROSC(%)');
 title('Fitted Polynomial Surface on CA1 (2D Contour Plot)');
 set(gca, 'fontsize', 14);
 set(gcf, 'color', 'w');
@@ -182,23 +241,21 @@ colormap(flipud(hot)); % You can adjust the colormap if needed
 % Create a 2D contour plot
 figure(106);
 % Filled contour plot for the fitted surface
-contourf(xGrid, zFitted_ca3*100,yGrid, 50,'LineColor', 'k'); % Black contour lines
+contourf(xGrid,zFitted_ca3*100,yGrid,  50,'LineColor', 'k'); % Black contour lines
 
 % Add colorbar to represent the Z-values
 cb = colorbar;
-ylabel(cb, 'CMRO2 value', 'FontSize', 14); % Label for the colorbar
+ylabel(cb, 'CMRO2 (μmol O2/100 g/min)', 'FontSize', 14); % Label for the colorbar
 
 % Plot the original data points in 2D (scatter plot without z-axis)
-hold on;
-%scatter(T, Y, 50, 'b', 'filled'); % 2D scatter plot for original data
 
 % Modify the legend to include new formula
-legend('Data', formula_str2, 'Interpreter', 'latex', ...
-    'Location', 'northoutside', 'Orientation', 'horizontal');
+% legend('Data', formula_str2, 'Interpreter', 'latex', ...
+%     'Location', 'northoutside', 'Orientation', 'horizontal');
 
 % Update the labels with better descriptions
 xlabel('Time for CMRO2 Measurement (Post-ROSC minutes)');
-ylabel('DAMAGED CELL COUNT (%)');
+ylabel('Damaged Cells 2-hr postROSC(%)');
 title('Fitted Polynomial Surface on CA3 (2D Contour Plot)');
 set(gca, 'fontsize', 14);
 set(gcf, 'color', 'w');

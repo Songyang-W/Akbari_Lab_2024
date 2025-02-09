@@ -1,13 +1,15 @@
 function Weiss_Optical_Stats_V2(time,treatment,placebo,group_name)
 % This code will 1.smooth the raw data by using sgolayfilt; 2.
 %% variable settings TODO
-window_size = 2;%min
-overlap = 1;%min
+window_size = 4;%min
+overlap = 2;%min
 
 %% calculate the slope change
 %TODO, sgolayfilt(treatment, 1, 101) can change 1 and 101
-treatment_sgolay = sgolayfilt(treatment, 1, 101);
-placebo_sgolay = sgolayfilt(placebo, 1, 101);
+%treatment_sgolay = sgolayfilt(treatment, 1, 101);
+%placebo_sgolay = sgolayfilt(placebo, 1, 101);
+treatment_sgolay = treatment;
+placebo_sgolay = placebo;
 [placebo_slope,placebo_intersect,new_time]=Slope_trend(time,placebo_sgolay,window_size,overlap);
 [treatment_slope,treatment_intersect]=Slope_trend(time,treatment_sgolay,window_size,overlap);
 % stats of the slope
@@ -22,9 +24,10 @@ mouse_number_treatment = size(treatment_slope,2)
 
 types = [repmat("treatment", mouse_number_treatment*timepoint_number, 1);...
     repmat("placebo", mouse_number_placebo*timepoint_number, 1)];
-timepoints = [repmat(new_time', mouse_number_treatment, 1);...
-    repmat(new_time', mouse_number_placebo, 1)];
-mice = repmat((1:mouse_number)', timepoint_number, 1);  % Mouse ID from 1 to 30, repeated for 10 timepoints
+timepoints = [repmat((new_time-0.25)', mouse_number_treatment, 1);...
+    repmat((new_time+0.25)', mouse_number_placebo, 1)];
+%mice = repmat((1:mouse_number)', timepoint_number, 1);  % Mouse ID from 1 to 30, repeated for 10 timepoints
+mice = reshape(repmat(1:mouse_number, timepoint_number, 1), [], 1);
 
 data_combined = [treatment_slope(:); placebo_slope(:)];
 
@@ -57,6 +60,7 @@ legend
 %{
 Plot_range_mean(new_time',treatment_slope,'ro', ...
     'treatment group')
+hold on
 Plot_range_mean(new_time',placebo_slope,'bo', ...
     'placebo group')
 legend

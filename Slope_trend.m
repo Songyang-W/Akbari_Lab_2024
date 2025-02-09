@@ -1,6 +1,6 @@
 function [slope_matrix,intersect_matrix,new_time]=Slope_trend(time,data,window_size,overlap)
 
-fs = 100;%hz
+fs = 0.5;%hz
 time_resize = buffer(time,window_size*fs,overlap*fs);
 time_resize(:,[1,end]) = []; %remove the first column and the last column due to lot of 0
 new_time = mean(time_resize);
